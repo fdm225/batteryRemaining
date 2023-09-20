@@ -101,6 +101,9 @@
 local Title = "Flight Battery Monitor"
 name = "mahRe2"
 
+local sfDefaultValues = {4000, 4500, 5000, 5200, 6000, 8200}
+
+
 -- Do not change the next line
 GV = {[1] = 0, [2] = 1, [3] = 2,[4] = 3,[5] = 4,[6] = 5, [7] = 6, [8] = 7, [9] = 8}
 
@@ -186,34 +189,22 @@ local function create()
 end
 
 local function paint(widget)
-  if widget.sensor ~= nil then
-    lcd.font(FONT_L)
-    local y = 10
-    lcd.drawText(10, y, "Total = " .. widget.sensor:stringValue() .. " (" .. widget.sensor:stringValue(OPTION_CELL_COUNT) .. " cells)")
-    y = y + 30
-    for i = 1, widget.sensor:value(OPTION_CELL_COUNT) do
-      lcd.drawText(10, y, "Cell[" .. i .."] = " .. widget.sensor:stringValue(OPTION_CELL_INDEX(i)))
-      y = y + 30
-    end
-	local mahValue = widget.mah:rawValue()
-    mahValue = "mAh = " .. mahValue
-    lcd.drawText(10, y, mahValue,0)
-  end
+    y=30
+	lcd.drawText(10, y, "capacity: "..widget.capacity )
 end
 
 local function wakeup(widget)
-  local newValue = nil
-  if widget.sensor == nil then
-    widget.sensor = system.getSource("LiPo")
-  end
-  if widget.sensor ~= nil then
-    newValue = widget.sensor:stringValue()
-  end
-  if widget.value ~= newValue then
-    widget.value = newValue
-    lcd.invalidate()
-  end
-  lcd.invalidate()
+	if widget.useSpecialFunctionButtons then
+		for i=0,6,1 do
+			local me = system.getSource({category=CATEGORY_FUNCTION_SWITCH, member=i})
+			local value = me:value()
+			if value == 1024 then
+				widget.capacity = widget.sfCapacity[i+1]
+				lcd.invalidate()
+				break
+			end
+    	end
+	end
 end
 
 local function configure(widget)
