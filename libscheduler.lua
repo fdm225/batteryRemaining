@@ -23,7 +23,7 @@ function lib.new()
         if scheduler.tasks[name] == nil then
             --print("adding task " .. name)
             task = {}
-            task['startTime'] = getRtcTime()
+            task['startTime'] = os.clock()
             task['interval'] = interval --Interval at which this should be true
             task['last_second'] = -1 -- last interval that the ready flag was set
             task['ready'] = false -- the value as to if this is ready for use
@@ -40,7 +40,7 @@ function lib.new()
 
     function scheduler.tick()
         for varName, task in pairs(scheduler.tasks) do
-            local currentTime = getRtcTime()
+            local currentTime = os.clock()
             local deltaTime = currentTime - task.startTime
             if (task.execute_immediately == false and currentTime ~= task.startTime) or task.execute_immediately then
                 if  (deltaTime % task.interval) == 0 and deltaTime > task.last_second then
