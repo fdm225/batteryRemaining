@@ -11,16 +11,108 @@ function loadSched()
 end
 
 function loadService()
-	if not libSERVICE then
-	-- Loadable code chunk is called immediately and returns libGUI
-		libSERVICE = loadfile("libservice.lua")
-	end
+    if not libSERVICE then
+        -- Loadable code chunk is called immediately and returns libGUI
+        libSERVICE = loadfile("libservice.lua")
+    end
 
-	return libSERVICE()
+    return libSERVICE()
+end
+
+local function paint4th(widget)
+    -- 1/4 scree 388x132 (supported)
+    local y = 0
+    local w, h = lcd.getWindowSize()
+    local color = lcd.RGB(0xF8, 0xB0, 0x38)
+    lcd.font(FONT_XS)
+    local capicityLabel = "Capacity: " .. widget.capacityFullMah
+    lcd.drawText(w, y, capicityLabel, RIGHT)
+
+    local text_w, text_h = lcd.getTextSize("")
+    y = y + text_h + 5
+    lcd.font(FONT_XXL)
+    local capRemainLabel = math.floor(widget.capacityRemainingMah) .. " mAh"
+    lcd.drawText(w / 2, y, capRemainLabel, CENTERED)
+
+    local text_w,
+    text_h = lcd.getTextSize("")
+    y = y + text_h + 5
+    local box_top = y
+    local box_height = h - y - 4
+    local box_left = 4
+    local box_width = w - 8
+
+    -- Gauge background
+    lcd.color(lcd.RGB(200, 200, 200))
+    lcd.drawFilledRectangle(box_left, box_top, box_width, box_height)
+
+    -- Gauge Percentage to width calculation
+    local gauge_width = math.floor((((box_width - 2) / 100) * widget.batteryRemainingPercent) + 2)
+    -- Gauge bar horizontal
+    lcd.color(color)
+    lcd.drawFilledRectangle(box_left, box_top, gauge_width, box_height)
+
+    -- Gauge frame outline
+    lcd.color(lcd.RGB(0, 0, 0))
+    lcd.drawRectangle(box_left, box_top, box_width, box_height)
+    lcd.drawRectangle(box_left + 1, box_top + 1, box_width - 2, box_height - 2)
+
+    -- Gauge percentage
+    lcd.drawText(box_left + box_width / 2, box_top + (box_height - text_h) / 2 + 4, math.floor(widget.batteryRemainingPercent) .. "%", CENTERED)
+
+end
+
+local function paint6th(widget)
+    -- 1/4 scree 388x132 (supported)
+    local y = 0
+    local w, h = lcd.getWindowSize()
+    local color = lcd.RGB(0xF8, 0xB0, 0x38)
+
+
+    --lcd.font(FONT_XXL)
+    --local capRemainLabel = math.floor(widget.capacityRemainingMah) .. " mAh"
+    --lcd.drawText(w / 2, y, capRemainLabel, CENTERED)
+    --
+    --local text_w, text_h = lcd.getTextSize("")
+    --y = y + text_h + 5
+
+    local box_top = y
+    local box_height = h - y - 4
+    local box_left = 4
+    local box_width = w - 8
+
+    -- Gauge background
+    lcd.color(lcd.RGB(200, 200, 200))
+    lcd.drawFilledRectangle(box_left, box_top, box_width, box_height)
+
+    -- Gauge Percentage to width calculation
+    local gauge_width = math.floor((((box_width - 2) / 100) * widget.batteryRemainingPercent) + 2)
+    -- Gauge bar horizontal
+    lcd.color(color)
+    lcd.drawFilledRectangle(box_left, box_top, gauge_width, box_height)
+
+    -- Gauge frame outline
+    lcd.color(lcd.RGB(0, 0, 0))
+    lcd.drawRectangle(box_left, box_top, box_width, box_height)
+    lcd.drawRectangle(box_left + 1, box_top + 1, box_width - 2, box_height - 2)
+
+    -- Gauge percentage
+    lcd.font(FONT_XS)
+    local padding = "  "
+    y = y + 2
+    local capicityLabel = math.floor(widget.capacityRemainingMah) .. "/" .. widget.capacityFullMah .. padding
+    lcd.drawText(w, y, capicityLabel, RIGHT)
+    --
+    lcd.font(FONT_XL)
+    local text_w, text_h = lcd.getTextSize("")
+    --y = y + text_h + 5
+    --lcd.drawText(box_left + box_width / 2, box_top + (box_height - text_h) / 2 + 4, math.floor(widget.capacityRemainingMah).."/"..widget.capacityFullMah, CENTERED)
+    lcd.drawText(box_left + box_width / 2, box_top + (box_height - text_h) / 2 + 4, math.floor(widget.batteryRemainingPercent) .. "%", CENTERED)
+
 end
 
 ----------------------------------------------------------------------------------------------------------------------
-local name = "Flight Battery Monitor"
+local name = "Battery Remaining"
 local key = "mahRe2"
 
 local function create()
@@ -30,10 +122,16 @@ local function create()
 end
 
 local function paint(widget)
-    y = 30
-    lcd.drawText(10, y, "capacity: " .. widget.capacityFullMah)
-    lcd.drawText(10, y + 30, "mAh remaining: " .. widget.capacityRemainingMah)
-    lcd.drawText(10, y + 60, "percent remaining: " .. widget.batteryRemainingPercent)
+
+    local w, h = lcd.getWindowSize()
+    if w == 388 and h == 132 then
+        paint4th(widget)
+    elseif w == 300 and h == 66 then
+        paint6th(widget)
+    else
+        paint4th(widget)
+    end
+
 end
 
 local function wakeup(widget)
@@ -59,7 +157,9 @@ local function configure(widget)
     -- Battery pack capacity
     line = form.addLine("Capacity")
     local capacity = form.addNumberField(line, nil, 100, 10000,
-            function() return widget.capacityFullMah end,
+            function()
+                return widget.capacityFullMah
+            end,
             function(value)
                 widget.capacityFullMah = value
                 widget.capacityFullUpdated = true
@@ -101,6 +201,7 @@ local function configure(widget)
 end
 
 local function read(widget)
+    print("in read funciton")
     widget.resetSwitch = storage.read("resetSwitch")
     --widget.resetSwitch = system.getSource({category=CATEGORY_SWITCH, member=17})
     -- widget.resetSwitch = system.getSource({category=10, member=17})
@@ -133,6 +234,9 @@ local function write(widget)
     storage.write("useSpecialFunctionButtons", widget.useSpecialFunctionButtons)
     print("length: " .. #widget.sfCapacityMah)
     for i = 1, 6, 1 do
+        if widget.sfCapacityMah[i] == nil then
+            widget.sfCapacityMah[i] = sfDefaultValues[i]
+        end
         local specialFunctionButton = "sfCapacityMah" .. i
         storage.write("sfCapacityMah" .. i, widget.sfCapacityMah[i])
         print("writing " .. specialFunctionButton .. " " .. widget.sfCapacityMah[i])

@@ -1,12 +1,13 @@
 local lib = { }
 
 function lib.new()
+    local libscheduler = libscheduler or loadSched()
     local service = {
         -- get system info here
         currentSensor = system.getSource("Current"),
         resetSwitch = nil, -- switch to reset script, usually same switch to reset timers
         startTime = os.clock(),
-        --scheduler = libscheduler.new(), -- todo: check to see if this can be removed
+        scheduler = libscheduler.new(), -- todo: check to see if this can be removed
         --source = system.getSource("Throttle"), -- todo: check to see if this can be removed
 
         -- misc
@@ -95,7 +96,7 @@ function lib.new()
                 print("reset event")
                 service.startTime = os.clock()  -- this resets the mAh used counter
                 service.scheduler.reset()
-                resetWidget(service)
+                service.initializeValues()
             elseif -1024 == resetSwitchValue then
                 --print("reset switch released")
                 service.scheduler.remove('reset_sw')
