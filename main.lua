@@ -168,35 +168,52 @@ local function configure(widget)
     capacity:default(5000)
     capacity:step(100)
 
-    form.beginExpansionPanel("Special Function Buttons")
+    if type(form.beginExpansionPanel) == 'function' then
+        form.beginExpansionPanel("Special Function Buttons")
+        line = form.addLine("Use Special Function Buttons")
+        form.addBooleanField(line, form.getFieldSlots(line)[0],
+                function() return widget.useSpecialFunctionButtons end,
+                function(value) widget.useSpecialFunctionButtons = value end
+        )
 
-    line = form.addLine("Use Special Function Buttons")
-    form.addBooleanField(line, form.getFieldSlots(line)[0], function()
-        return widget.useSpecialFunctionButtons
-    end, function(value)
-        widget.useSpecialFunctionButtons = value
-    end)
+        for i = 1, 6, 1 do
+            line = form.addLine("SF" .. i .. " Capacity")
+            local capacity = form.addNumberField(line, nil, 100, 10000,
+                    function() return widget.sfCapacityMah[i] end,
+                    function(value) widget.sfCapacityMah[i] = value end
+            )
+            capacity:suffix("mAh")
+            capacity:default(sfDefaultValues[i])
+            capacity:step(100)
+        end
+        form.endExpansionPanel()
+    else
+        panel = form.addExpansionPanel("Special Function Buttons")
+        line = form.addLine("Use Special Function Buttons", panel)
+        form.addBooleanField(line, form.getFieldSlots(line)[0],
+                function() return widget.useSpecialFunctionButtons end,
+                function(value) widget.useSpecialFunctionButtons = value end
+        )
 
-    for i = 1, 6, 1 do
-        line = form.addLine("SF" .. i .. " Capacity")
-        local capacity = form.addNumberField(line, nil, 100, 10000, function()
-            return widget.sfCapacityMah[i]
-        end, function(value)
-            widget.sfCapacityMah[i] = value
-        end)
-        capacity:suffix("mAh")
-        capacity:default(sfDefaultValues[i])
-        capacity:step(100)
+        for i = 1, 6, 1 do
+            line = form.addLine("SF" .. i .. " Capacity", panel)
+            local capacity = form.addNumberField(line, nil, 100, 10000,
+                    function() return widget.sfCapacityMah[i] end,
+                    function(value) widget.sfCapacityMah[i] = value end,
+                    panel
+            )
+            capacity:suffix("mAh")
+            capacity:default(sfDefaultValues[i])
+            capacity:step(100)
+        end
+        panel:open(false)
     end
 
-    form.endExpansionPanel()
-
     line = form.addLine("Source")
-    form.addSourceField(line, nil, function()
-        return widget.source
-    end, function(value)
-        widget.source = value
-    end)
+    form.addSourceField(line, nil,
+            function() return widget.source end,
+            function(value) widget.source = value end
+    )
 
 end
 
