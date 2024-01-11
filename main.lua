@@ -112,7 +112,7 @@ local function paint6th(widget)
 end
 
 ----------------------------------------------------------------------------------------------------------------------
-local name = "Battery Remaining"
+local name = "mahRe2"
 local key = "mahRe2"
 
 local function create()
