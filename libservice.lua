@@ -113,7 +113,7 @@ function lib.new()
             for i = 0, 6, 1 do
                 local me = system.getSource({ category = CATEGORY_FUNCTION_SWITCH, member = i })
                 local value = me:value()
-                if value == 1024 then
+                if value == 1024 or value == 100 then
                     service.capacityFullMah = service.sfCapacityMah[i + 1]
                     service.capacityFullUpdated = true
                     break
