@@ -32,11 +32,6 @@ function lib.new()
         batteryRemainingPercentPlayed = 0, -- updated in service.PlayPercentRemaining
         atZeroPlayedCount = 0, -- updated in initializeValues, service.PlayPercentRemaining
         playAtZero = 1,
-
-        soundsTable = { [5] = "Bat5L.wav", [10] = "Bat10L.wav", [20] = "Bat20L.wav",
-                        [30] = "Bat30L.wav", [40] = "Bat40L.wav", [50] = "Bat50L.wav",
-                        [60] = "Bat60L.wav", [70] = "Bat70L.wav", [80] = "Bat80L.wav",
-                        [90] = "Bat90L.wav" }
     }
 
     function service.playPercentRemaining()
@@ -51,12 +46,9 @@ function lib.new()
         end
 
         if myModVal == 0 and service.batteryRemainingPercent ~= service.batteryRemainingPercentPlayed then
-            service.batteryRemainingPercentFileName = ""
-            service.batteryRemainingPercentFileName = (service.soundsTable[service.batteryRemainingPercent])
-            if service.batteryRemainingPercentFileName ~= nil then
-                system.playFile(service.soundDirPath .. service.batteryRemainingPercentFileName)
-                service.batteryRemainingPercentPlayed = service.batteryRemainingPercent    -- do not keep playing the same sound file over and
-            end
+            system.playNumber(service.batteryRemainingPercent, UNIT_PERCENT, 0)
+            system.playFile(service.soundDirPath .. "remaining.wav")
+            service.batteryRemainingPercentPlayed = service.batteryRemainingPercent    -- do not keep playing the same sound file over and
         end
 
         local rssi = system.getSource("RSSI")
@@ -116,6 +108,7 @@ function lib.new()
                 if value == 1024 or value == 100 then
                     service.capacityFullMah = service.sfCapacityMah[i + 1]
                     service.capacityFullUpdated = true
+                    system.playNumber(service.capacityFullMah, UNIT_MILLIAMPERE_HOUR, 0)
                     break
                 end
             end
