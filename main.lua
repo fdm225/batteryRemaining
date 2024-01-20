@@ -25,13 +25,13 @@ local function paint4th(widget)
     local w, h = lcd.getWindowSize()
     local color = lcd.RGB(0xF8, 0xB0, 0x38)
     lcd.font(FONT_XS)
-    local capicityLabel = "Capacity: " .. widget.capacityFullMah
+    local capicityLabel = "Capacity: " .. widget.service.capacityFullMah
     lcd.drawText(w, y, capicityLabel, RIGHT)
 
     local text_w, text_h = lcd.getTextSize("")
     y = y + text_h + 5
     lcd.font(FONT_XXL)
-    local capRemainLabel = math.floor(widget.capacityRemainingMah) .. " mAh"
+    local capRemainLabel = math.floor(widget.service.capacityRemainingMah) .. " mAh"
     lcd.drawText(w / 2, y, capRemainLabel, CENTERED)
 
     local text_w,
@@ -47,7 +47,7 @@ local function paint4th(widget)
     lcd.drawFilledRectangle(box_left, box_top, box_width, box_height)
 
     -- Gauge Percentage to width calculation
-    local gauge_width = math.floor((((box_width - 2) / 100) * widget.batteryRemainingPercent) + 2)
+    local gauge_width = math.floor((((box_width - 2) / 100) * widget.service.batteryRemainingPercent) + 2)
     -- Gauge bar horizontal
     lcd.color(color)
     lcd.drawFilledRectangle(box_left, box_top, gauge_width, box_height)
@@ -58,7 +58,7 @@ local function paint4th(widget)
     lcd.drawRectangle(box_left + 1, box_top + 1, box_width - 2, box_height - 2)
 
     -- Gauge percentage
-    lcd.drawText(box_left + box_width / 2, box_top + (box_height - text_h) / 2 + 4, math.floor(widget.batteryRemainingPercent) .. "%", CENTERED)
+    lcd.drawText(box_left + box_width / 2, box_top + (box_height - text_h) / 2 + 4, math.floor(widget.service.batteryRemainingPercent) .. "%", CENTERED)
 
 end
 
@@ -86,7 +86,7 @@ local function paint6th(widget)
     lcd.drawFilledRectangle(box_left, box_top, box_width, box_height)
 
     -- Gauge Percentage to width calculation
-    local gauge_width = math.floor((((box_width - 2) / 100) * widget.batteryRemainingPercent) + 2)
+    local gauge_width = math.floor((((box_width - 2) / 100) * widget.service.batteryRemainingPercent) + 2)
     -- Gauge bar horizontal
     lcd.color(color)
     lcd.drawFilledRectangle(box_left, box_top, gauge_width, box_height)
@@ -100,14 +100,14 @@ local function paint6th(widget)
     lcd.font(FONT_XS)
     local padding = "  "
     y = y + 2
-    local capicityLabel = math.floor(widget.capacityRemainingMah) .. "/" .. widget.capacityFullMah .. padding
+    local capicityLabel = math.floor(widget.service.capacityRemainingMah) .. "/" .. widget.service.capacityFullMah .. padding
     lcd.drawText(w, y, capicityLabel, RIGHT)
     --
     lcd.font(FONT_XL)
     local text_w, text_h = lcd.getTextSize("")
     --y = y + text_h + 5
-    --lcd.drawText(box_left + box_width / 2, box_top + (box_height - text_h) / 2 + 4, math.floor(widget.capacityRemainingMah).."/"..widget.capacityFullMah, CENTERED)
-    lcd.drawText(box_left + box_width / 2, box_top + (box_height - text_h) / 2 + 4, math.floor(widget.batteryRemainingPercent) .. "%", CENTERED)
+    --lcd.drawText(box_left + box_width / 2, box_top + (box_height - text_h) / 2 + 4, math.floor(widget.service.capacityRemainingMah).."/"..widget.service.capacityFullMah, CENTERED)
+    lcd.drawText(box_left + box_width / 2, box_top + (box_height - text_h) / 2 + 4, math.floor(widget.service.batteryRemainingPercent) .. "%", CENTERED)
 
 end
 
@@ -117,7 +117,16 @@ local key = "mahRe2"
 
 local function create()
     local libservice = libservice or loadService()
-    local widget = libservice.new()
+    local serviceStarted = false
+    if not g_mahRe2Service then
+        g_mahRe2Service = libservice.new()
+        serviceStarted = true
+    end
+
+    widget = {
+        service = g_mahRe2Service,
+        serviceStarted = serviceStarted
+    }
     return widget
 end
 
@@ -135,7 +144,7 @@ local function paint(widget)
 end
 
 local function wakeup(widget)
-    widget.bg_func()
+    widget.service.bg_func()
 end
 
 local function configure(widget)
@@ -147,9 +156,9 @@ local function configure(widget)
     -- reset switch position
     line = form.addLine("Reset Switch")
     form.addSwitchField(line, form.getFieldSlots(line)[0], function()
-        return widget.resetSwitch
+        return widget.service.resetSwitch
     end, function(value)
-        widget.resetSwitch = value
+        widget.service.resetSwitch = value
     end)
     --resetSwitch:default("SF╚")
 
@@ -158,11 +167,11 @@ local function configure(widget)
     line = form.addLine("Capacity")
     local capacity = form.addNumberField(line, nil, 100, 10000,
             function()
-                return widget.capacityFullMah
+                return widget.service.capacityFullMah
             end,
             function(value)
-                widget.capacityFullMah = value
-                widget.capacityFullUpdated = true
+                widget.service.capacityFullMah = value
+                widget.service.capacityFullUpdated = true
             end)
     capacity:suffix("mAh")
     capacity:default(5000)
@@ -172,15 +181,15 @@ local function configure(widget)
         form.beginExpansionPanel("Special Function Buttons")
         line = form.addLine("Use Special Function Buttons")
         form.addBooleanField(line, form.getFieldSlots(line)[0],
-                function() return widget.useSpecialFunctionButtons end,
-                function(value) widget.useSpecialFunctionButtons = value end
+                function() return widget.service.useSpecialFunctionButtons end,
+                function(value) widget.service.useSpecialFunctionButtons = value end
         )
 
         for i = 1, 6, 1 do
             line = form.addLine("SF" .. i .. " Capacity")
             local capacity = form.addNumberField(line, nil, 100, 10000,
-                    function() return widget.sfCapacityMah[i] end,
-                    function(value) widget.sfCapacityMah[i] = value end
+                    function() return widget.service.sfCapacityMah[i] end,
+                    function(value) widget.service.sfCapacityMah[i] = value end
             )
             capacity:suffix("mAh")
             capacity:default(sfDefaultValues[i])
@@ -191,15 +200,15 @@ local function configure(widget)
         panel = form.addExpansionPanel("Special Function Buttons")
         line = form.addLine("Use Special Function Buttons", panel)
         form.addBooleanField(line, form.getFieldSlots(line)[0],
-                function() return widget.useSpecialFunctionButtons end,
-                function(value) widget.useSpecialFunctionButtons = value end
+                function() return widget.service.useSpecialFunctionButtons end,
+                function(value) widget.service.useSpecialFunctionButtons = value end
         )
 
         for i = 1, 6, 1 do
             line = form.addLine("SF" .. i .. " Capacity", panel)
             local capacity = form.addNumberField(line, nil, 100, 10000,
-                    function() return widget.sfCapacityMah[i] end,
-                    function(value) widget.sfCapacityMah[i] = value end,
+                    function() return widget.service.sfCapacityMah[i] end,
+                    function(value) widget.service.sfCapacityMah[i] = value end,
                     panel
             )
             capacity:suffix("mAh")
@@ -211,34 +220,34 @@ local function configure(widget)
 
     line = form.addLine("Source")
     form.addSourceField(line, nil,
-            function() return widget.source end,
-            function(value) widget.source = value end
+            function() return widget.service.source end,
+            function(value) widget.service.source = value end
     )
 
 end
 
 local function read(widget)
     print("in read funciton")
-    widget.resetSwitch = storage.read("resetSwitch")
-    --widget.resetSwitch = system.getSource({category=CATEGORY_SWITCH, member=17})
-    -- widget.resetSwitch = system.getSource({category=10, member=17})
-    ----if not widget.resetSwitch then
-    ----    widget.resetSwitch = system.getSource("SF╚")
+    widget.service.resetSwitch = storage.read("resetSwitch")
+    --widget.service.resetSwitch = system.getSource({category=CATEGORY_SWITCH, member=17})
+    -- widget.service.resetSwitch = system.getSource({category=10, member=17})
+    ----if not widget.service.resetSwitch then
+    ----    widget.service.resetSwitch = system.getSource("SF╚")
     ----end
-    widget.capacityFullMah = storage.read("capacity")
-    if not widget.capacityFullMah then
-        widget.capacityFullMah = defaultPackCapacityMah
+    widget.service.capacityFullMah = storage.read("capacity")
+    if not widget.service.capacityFullMah then
+        widget.service.capacityFullMah = defaultPackCapacityMah
     end
-    widget.capacityFullUpdated = true
-    widget.useSpecialFunctionButtons = storage.read("useSpecialFunctionButtons")
+    widget.service.capacityFullUpdated = true
+    widget.service.useSpecialFunctionButtons = storage.read("useSpecialFunctionButtons")
     for i = 1, 6, 1 do
         local specialFunctionButton = "sfCapacityMah" .. i
         value = storage.read(specialFunctionButton)
         if value then
-            widget.sfCapacityMah[i] = value
+            widget.service.sfCapacityMah[i] = value
             print("read:" .. specialFunctionButton .. " " .. value)
         else
-            widget.sfCapacityMah[i] = sfDefaultValues[i]
+            widget.service.sfCapacityMah[i] = sfDefaultValues[i]
             print("setting default value:" .. specialFunctionButton .. " " .. sfDefaultValues[i])
         end
     end
@@ -246,17 +255,17 @@ local function read(widget)
 end
 
 local function write(widget)
-    storage.write("resetSwitch", widget.resetSwitch)
-    storage.write("capacity", widget.capacityFullMah)
-    storage.write("useSpecialFunctionButtons", widget.useSpecialFunctionButtons)
-    print("length: " .. #widget.sfCapacityMah)
+    storage.write("resetSwitch", widget.service.resetSwitch)
+    storage.write("capacity", widget.service.capacityFullMah)
+    storage.write("useSpecialFunctionButtons", widget.service.useSpecialFunctionButtons)
+    print("length: " .. #widget.service.sfCapacityMah)
     for i = 1, 6, 1 do
-        if widget.sfCapacityMah[i] == nil then
-            widget.sfCapacityMah[i] = sfDefaultValues[i]
+        if widget.service.sfCapacityMah[i] == nil then
+            widget.service.sfCapacityMah[i] = sfDefaultValues[i]
         end
         local specialFunctionButton = "sfCapacityMah" .. i
-        storage.write("sfCapacityMah" .. i, widget.sfCapacityMah[i])
-        print("writing " .. specialFunctionButton .. " " .. widget.sfCapacityMah[i])
+        storage.write("sfCapacityMah" .. i, widget.service.sfCapacityMah[i])
+        print("writing " .. specialFunctionButton .. " " .. widget.service.sfCapacityMah[i])
     end
 end
 
