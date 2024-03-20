@@ -105,7 +105,8 @@ function lib.new()
             for i = 0, 6, 1 do
                 local me = system.getSource({ category = CATEGORY_FUNCTION_SWITCH, member = i })
                 local value = me:value()
-                if value == 1024 or value == 100 then
+                if (value == 1024 or value == 100) and service.sfCapacityMah[i + 1] ~= service.capacityFullMah then
+                    service.sfCurrentValue = i
                     service.capacityFullMah = service.sfCapacityMah[i + 1]
                     service.capacityFullUpdated = true
                     system.playNumber(service.capacityFullMah, UNIT_MILLIAMPERE_HOUR, 0)
