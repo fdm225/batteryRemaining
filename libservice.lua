@@ -4,7 +4,8 @@ function lib.new()
     local libscheduler = libscheduler or loadSched()
     local service = {
         -- get system info here
-        currentSensor = system.getSource("Current"),
+        --currentSensor = system.getSource("Current"),
+        source = system.getSource("Consumption"),
         resetSwitch = nil, -- switch to reset script, usually same switch to reset timers
         startTime = os.clock(),
         scheduler = libscheduler.new(), -- todo: check to see if this can be removed
@@ -78,7 +79,7 @@ function lib.new()
             local debounced = service.scheduler.check('reset_sw')
             --print("debounced: " .. tostring(debounced))
             local resetSwitchValue = service.resetSwitch:value()
-            if (debounced == nil or debounced == true) and -1024 ~= resetSwitchValue then
+            if (debounced == nil or debounced == true) and -100 ~= resetSwitchValue then
                 -- reset switch
                 service.scheduler.add('reset_sw', false, 2) -- add the reset switch to the scheduler
                 --print("reset start task: " .. tostring(service.scheduler.tasks['reset_sw'].ready))
@@ -89,7 +90,7 @@ function lib.new()
                 service.startTime = os.clock()  -- this resets the mAh used counter
                 service.scheduler.reset()
                 service.initializeValues()
-            elseif -1024 == resetSwitchValue then
+            elseif -100 == resetSwitchValue then
                 --print("reset switch released")
                 service.scheduler.remove('reset_sw')
             end
@@ -98,6 +99,7 @@ function lib.new()
 
     function service.bg_func()
         -- test if the reset switch is toggled, if so then reset all internal flags
+        service.scheduler.tick()
         service.reset_if_needed()
 
         -- check the special function buttons to see if there is a change in pack capacity
@@ -119,8 +121,10 @@ function lib.new()
             service.initializeValues()
         end
 
-        if service.mAhSensor ~= "" then
-            service.capacityUsedMah = math.floor(service.currentSensor:value() * 1000 * (os.clock() - service.startTime) / 3600)
+        if service.source:value() ~= service.capacityUsedMah then
+            --service.capacityUsedMah = math.floor(service.currentSensor:value() * 1000 * (os.clock() - service.startTime) / 3600)
+            service.capacityUsedMah = service.source:value()
+            --print("capacityUsedMah: " .. service.capacityUsedMah)
             if (service.capacityUsedMah == 0) and service.canCallInitFuncAgain then
                 -- service.capacityUsedMah == 0 when Telemetry has been reset or model loaded
                 -- service.capacityUsedMah == 0 when no battery used which could be a long time

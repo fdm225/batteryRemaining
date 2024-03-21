@@ -111,6 +111,11 @@ local function paint6th(widget)
 
 end
 
+local function paint9th(widget)
+    paint6th(widget)
+end
+
+
 ----------------------------------------------------------------------------------------------------------------------
 local name = "mahRe2"
 local key = "mahRe2"
@@ -137,7 +142,10 @@ local function paint(widget)
         paint4th(widget)
     elseif w == 300 and h == 66 then
         paint6th(widget)
+    elseif w == 256 and h == 78 then
+        paint9th(widget)
     else
+        --print("w: " .. w .. " h: " .. h)
         paint4th(widget)
     end
 
@@ -227,45 +235,50 @@ local function configure(widget)
 end
 
 local function read(widget)
-    print("in read funciton")
-    widget.service.resetSwitch = storage.read("resetSwitch")
-    --widget.service.resetSwitch = system.getSource({category=CATEGORY_SWITCH, member=17})
-    -- widget.service.resetSwitch = system.getSource({category=10, member=17})
-    ----if not widget.service.resetSwitch then
-    ----    widget.service.resetSwitch = system.getSource("SF╚")
-    ----end
-    widget.service.capacityFullMah = storage.read("capacity")
-    if not widget.service.capacityFullMah then
-        widget.service.capacityFullMah = defaultPackCapacityMah
-    end
-    widget.service.capacityFullUpdated = true
-    widget.service.useSpecialFunctionButtons = storage.read("useSpecialFunctionButtons")
-    for i = 1, 6, 1 do
-        local specialFunctionButton = "sfCapacityMah" .. i
-        value = storage.read(specialFunctionButton)
-        if value then
-            widget.service.sfCapacityMah[i] = value
-            print("read:" .. specialFunctionButton .. " " .. value)
-        else
-            widget.service.sfCapacityMah[i] = sfDefaultValues[i]
-            print("setting default value:" .. specialFunctionButton .. " " .. sfDefaultValues[i])
+    if widget.serviceStarted then
+        print("in read funciton")
+        widget.service.resetSwitch = storage.read("resetSwitch")
+        --widget.service.resetSwitch = system.getSource({category=CATEGORY_SWITCH, member=17})
+        -- widget.service.resetSwitch = system.getSource({category=10, member=17})
+        ----if not widget.service.resetSwitch then
+        ----    widget.service.resetSwitch = system.getSource("SF╚")
+        ----end
+        widget.service.capacityFullMah = storage.read("capacity")
+        if not widget.service.capacityFullMah then
+            widget.service.capacityFullMah = defaultPackCapacityMah
         end
+        widget.service.capacityFullUpdated = true
+        widget.service.useSpecialFunctionButtons = storage.read("useSpecialFunctionButtons")
+        for i = 1, 6, 1 do
+            local specialFunctionButton = "sfCapacityMah" .. i
+            value = storage.read(specialFunctionButton)
+            if value then
+                widget.service.sfCapacityMah[i] = value
+                print("read:" .. specialFunctionButton .. " " .. value)
+            else
+                widget.service.sfCapacityMah[i] = sfDefaultValues[i]
+                print("setting default value:" .. specialFunctionButton .. " " .. sfDefaultValues[i])
+            end
+        end
+        widget.service.source = storage.read("source") | system.getSource("Consumption")
     end
-
 end
 
 local function write(widget)
-    storage.write("resetSwitch", widget.service.resetSwitch)
-    storage.write("capacity", widget.service.capacityFullMah)
-    storage.write("useSpecialFunctionButtons", widget.service.useSpecialFunctionButtons)
-    print("length: " .. #widget.service.sfCapacityMah)
-    for i = 1, 6, 1 do
-        if widget.service.sfCapacityMah[i] == nil then
-            widget.service.sfCapacityMah[i] = sfDefaultValues[i]
+    if widget.serviceStarted then
+        storage.write("resetSwitch", widget.service.resetSwitch)
+        storage.write("capacity", widget.service.capacityFullMah)
+        storage.write("useSpecialFunctionButtons", widget.service.useSpecialFunctionButtons)
+        print("length: " .. #widget.service.sfCapacityMah)
+        for i = 1, 6, 1 do
+            if widget.service.sfCapacityMah[i] == nil then
+                widget.service.sfCapacityMah[i] = sfDefaultValues[i]
+            end
+            local specialFunctionButton = "sfCapacityMah" .. i
+            storage.write("sfCapacityMah" .. i, widget.service.sfCapacityMah[i])
+            print("writing " .. specialFunctionButton .. " " .. widget.service.sfCapacityMah[i])
         end
-        local specialFunctionButton = "sfCapacityMah" .. i
-        storage.write("sfCapacityMah" .. i, widget.service.sfCapacityMah[i])
-        print("writing " .. specialFunctionButton .. " " .. widget.service.sfCapacityMah[i])
+        storage.write("source", widget.service.source)
     end
 end
 

@@ -25,7 +25,11 @@ function lib.new()
             task = {}
             task['startTime'] = os.clock()
             task['interval'] = interval --Interval at which this should be true
-            task['last_second'] = -1 -- last interval that the ready flag was set
+            if interval == 1 then
+                task['last_second'] = .5 -- last interval that the ready flag was set
+            else
+                task['last_second'] = -1 -- last interval that the ready flag was set
+            end
             task['ready'] = false -- the value as to if this is ready for use
             task['execute_immediately'] = execute_immediately
             task['f'] = f -- the funciton to call
@@ -43,7 +47,7 @@ function lib.new()
             local currentTime = os.clock()
             local deltaTime = currentTime - task.startTime
             if (task.execute_immediately == false and currentTime ~= task.startTime) or task.execute_immediately then
-                if  (deltaTime % task.interval) == 0 and deltaTime > task.last_second then
+                if  math.floor((deltaTime % task.interval)) == 0 and deltaTime > task.last_second then
                     -- only set true once per second
                     task.ready = true
                     task.last_second = deltaTime + 1
@@ -51,12 +55,12 @@ function lib.new()
                         task.f(unpack(task.f_args))
                     end
                     --print(varName .. " " .. deltaTime .. "/" .. task.interval .. " mod: " .. deltaTime % task.interval .. " ready: " .. tostring(task.ready))
-                elseif (deltaTime % task.interval) > 0 and deltaTime > task.last_second then
+                elseif math.floor((deltaTime % task.interval)) > 0 and deltaTime > task.last_second then
                     -- we are not on time, set false
                     --_G[varName] = false
                     task.ready = false
                 end
-                --print(varName .. " " .. deltaTime .. "/" .. task.interval .. " mod: " .. deltaTime % task.interval .. " ready: " .. tostring(task.ready))
+                print(varName .. " " .. deltaTime .. "/" .. task.interval .. " mod: " .. math.floor(deltaTime % task.interval) .. " ready: " .. tostring(task.ready))
             end
         end
     end
